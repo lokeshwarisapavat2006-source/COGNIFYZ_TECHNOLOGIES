@@ -1,0 +1,110 @@
+# task2_number_patterns.py
+# Cognifyz Technologies — Level 1 Task 2
+# Generates several classic number patterns using nested loops
+
+# ─── Pattern Functions ───────────────────────────────────────────────────────
+
+def right_triangle(n):
+    """Print a right-angle triangle of numbers."""
+    for row in range(1, n + 1):          # rows 1 to n
+        for col in range(1, row + 1):     # columns 1 to current row number
+            print(col, end=" ")           # end=" " keeps output on same line
+        print()                           # newline at end of each row
+
+
+def inverted_triangle(n):
+    """Print an inverted right-angle triangle."""
+    n = int(input("Enter a number: "))
+    for row in range(n, 0, -1):           # type: ignore # count DOWN from n to 1
+        for col in range(1, row + 1):
+            print(col, end=" ")
+        print()
+
+
+def pyramid(n):
+    """Print a centred number pyramid."""
+    for row in range(1, n + 1):
+        # Leading spaces to centre the pyramid
+        print(" " * (n - row), end="")
+        for col in range(1, row + 1):
+            print(col, end=" ")
+        print()
+
+
+def diamond(n):
+    """Print a diamond shape using the pyramid + inverted pyramid."""
+    # Upper half (including middle row)
+    for row in range(1, n + 1):
+        print(" " * (n - row), end="")
+        for col in range(1, row + 1):
+            print(col, end=" ")
+        print()
+    # Lower half (excluding middle row)
+    for row in range(n - 1, 0, -1):
+        print(" " * (n - row), end="")
+        for col in range(1, row + 1):
+            print(col, end=" ")
+        print()
+
+
+def pascal_triangle(n):
+    """Print Pascal's Triangle up to n rows."""
+    row = [1]                              # first row is always [1]
+    for i in range(n):
+        # Print leading spaces for centring
+        print(" " * (n - i - 1), end="")
+        print(" ".join(str(x) for x in row))
+        # Calculate next row: each element = sum of two elements above it
+        row = [1] + [row[j] + row[j + 1] for j in range(len(row) - 1)] + [1]
+
+
+# ─── Input Helpers ───────────────────────────────────────────────────────────
+
+def get_int(prompt, min_val=1, max_val=20):
+    """Read an integer from the user, ensuring it is in [min_val, max_val]."""
+    while True:
+        try:
+            value = int(input(prompt))
+            if min_val <= value <= max_val:
+                return value
+            print(f"  Please enter a number between {min_val} and {max_val}.")
+        except ValueError:                 # raised when input is not a valid integer
+            print("  Invalid input. Please enter a whole number.")
+
+
+# ─── Menu ────────────────────────────────────────────────────────────────────
+
+PATTERNS = {
+    "1": ("Right Triangle",    right_triangle),
+    "2": ("Inverted Triangle", inverted_triangle),
+    "3": ("Pyramid",           pyramid),
+    "4": ("Diamond",           diamond),
+    "5": ("Pascal's Triangle", pascal_triangle),
+}
+
+
+def show_menu():
+    print("\n" + "=" * 40)
+    print("   NUMBER PATTERN GENERATOR")
+    print("=" * 40)
+    for key, (name, _) in PATTERNS.items():
+        print(f"  {key}. {name}")
+    print("  0. Exit")
+    print("=" * 40)
+
+
+# ─── Entry Point ──────────────────────────────────────────────────────────────
+if __name__ == "__main__":
+    while True:
+        show_menu()
+        choice = input("Choose a pattern (0-5): ").strip()
+        if choice == "0":
+            print("Goodbye!")
+            break
+        if choice not in PATTERNS:
+            print("  Invalid choice.")
+            continue
+        name, func = PATTERNS[choice]
+        n = get_int(f"Enter the size for {name} (1-20): ", 1, 20)
+        print(f"\n--- {name} (n={n}) ---")
+        func(n)                            # call the chosen pattern function
