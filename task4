@@ -1,0 +1,84 @@
+# task4_temp_converter.py
+# Cognifyz Technologies — Level 2 Task 4
+# Temperature converter: Celsius, Fahrenheit, Kelvin
+
+# ─── Conversion Functions ────────────────────────────────────────────────────
+
+def celsius_to_fahrenheit(c): return (c * 9 / 5) + 32
+def fahrenheit_to_celsius(f): return (f - 32) * 5 / 9
+def celsius_to_kelvin(c):     return c + 273.15
+def kelvin_to_celsius(k):     return k - 273.15
+def fahrenheit_to_kelvin(f):  return celsius_to_kelvin(fahrenheit_to_celsius(f))
+def kelvin_to_fahrenheit(k):  return celsius_to_fahrenheit(kelvin_to_celsius(k))
+
+
+# ─── Conversion Table ─────────────────────────────────────────────────────────
+# CONVERSIONS[from_unit][to_unit] = conversion_function
+CONVERSIONS = {
+    "C": {
+        "F": celsius_to_fahrenheit,
+        "K": celsius_to_kelvin,
+        "C": lambda x: x,          # same unit — identity function
+    },
+    "F": {
+        "C": fahrenheit_to_celsius,
+        "K": fahrenheit_to_kelvin,
+        "F": lambda x: x,
+    },
+    "K": {
+        "C": kelvin_to_celsius,
+        "F": kelvin_to_fahrenheit,
+        "K": lambda x: x,
+    },
+}
+
+UNIT_NAMES = {"C": "Celsius", "F": "Fahrenheit", "K": "Kelvin"}
+UNIT_SYMBOLS = {"C": "°C", "F": "°F", "K": " K"}
+
+
+# ─── Input Helpers ───────────────────────────────────────────────────────────
+
+def get_temperature(prompt):
+    """Read a float from the user."""
+    while True:
+        try:
+            return float(input(prompt))
+        except ValueError:
+            print("  Please enter a valid number (e.g. 100, -40, 37.5).")
+
+
+def get_unit(prompt):
+    """Read C, F, or K from the user."""
+    while True:
+        unit = input(prompt).strip().upper()
+        if unit in CONVERSIONS:
+            return unit
+        print("  Invalid unit. Please enter C, F, or K.")
+
+
+# ─── Main Conversion Loop ─────────────────────────────────────────────────────
+
+def convert():
+    value   = get_temperature("  Enter temperature value: ")
+    from_u  = get_unit("  Convert FROM (C/F/K): ")
+    to_u    = get_unit("  Convert TO   (C/F/K): ")
+
+    result  = CONVERSIONS[from_u][to_u](value)   # look up and call function
+
+    from_sym = UNIT_SYMBOLS[from_u]
+    to_sym   = UNIT_SYMBOLS[to_u]
+    print(f"\n  {value:.2f}{from_sym}  =  {result:.2f}{to_sym}")
+    print(f"  ({UNIT_NAMES[from_u]} → {UNIT_NAMES[to_u]})")
+
+
+# ─── Entry Point ──────────────────────────────────────────────────────────────
+if __name__ == "__main__":
+    print("\n" + "=" * 45)
+    print("      TEMPERATURE CONVERTER")
+    print("=" * 45)
+    while True:
+        convert()
+        again = input("\n  Convert another? (yes/no): ").strip().lower()
+        if again not in ("yes", "y"):
+            print("  Goodbye!")
+            break
