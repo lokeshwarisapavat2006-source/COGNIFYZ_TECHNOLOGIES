@@ -1,0 +1,184 @@
+# task5_crud_persistent.py
+# Cognifyz Technologies — Level 3 Task 5
+# CRUD Task Manager with file-based persistence
+
+import os
+
+FILE_PATH = "tasks.txt"   # path to the persistent storage file
+
+
+# ─── Task Class ──────────────────────────────────────────────────────────────
+
+class Task:
+    def __init__(self, task_id, title, description, priority, status):
+        self.id          = int(task_id)
+        self.title       = title
+        self.description = description
+        self.priority    = priority
+        self.status      = status
+
+    def to_line(self):
+        """Serialise task to a pipe-delimited string."""
+        return f"{self.id}|{self.title}|{self.description}|{self.priority}|{self.status}"
+
+    @staticmethod
+    def from_line(line):
+        """Deserialise a pipe-delimited string into a Task object."""
+        parts = line.strip().split("|")
+        if len(parts) != 5:
+            return None   # skip malformed lines
+        return Task(*parts)
+
+    def __str__(self):
+        return (
+            f"[{self.id}] {self.title} | {self.priority} | {self.status}\n"
+            f"    {self.description}"
+        )
+
+
+# ─── File I/O ─────────────────────────────────────────────────────────────────
+
+def load_tasks():
+    """Load tasks from FILE_PATH. Returns a list of Task objects."""
+    tasks = []
+    if not os.path.exists(FILE_PATH):   # file may not exist on first run
+        return tasks
+    try:
+        with open(FILE_PATH, "r", encoding="utf-8") as f:
+            for line in f:
+                if line.strip() and not line.startswith("#"):
+                    task = Task.from_line(line)
+                    if task:
+                        tasks.append(task)
+    except IOError as e:
+        print(f"  Warning: Could not read {FILE_PATH}: {e}")
+    return tasks
+
+
+def save_tasks(tasks):
+    """Save all tasks to FILE_PATH, overwriting the existing content."""
+    try:
+        with open(FILE_PATH, "w", encoding="utf-8") as f:
+            f.write("# Task Manager Data File\n")
+            f.write("# id|title|description|priority|status\n")
+            for task in tasks:
+                f.write(task.to_line() + "\n")
+    except IOError as e:
+        print(f"  Error: Could not save to {FILE_PATH}: {e}")
+
+
+# ─── TaskManager with Persistence ─────────────────────────────────────────────
+class PersistentTaskManager:
+    def __init__(self):
+        self.tasks   = load_tasks()            # load from disk on startup
+        self._max_id = max((t.id for t in self.tasks), default=0)
+
+    def _next_id(self):
+        self._max_id += 1
+        return self._max_id
+
+    def _save(self):
+        save_tasks(self.tasks)                 # persist after every change
+
+    def create(self, title, description, priority):
+        task = Task(self._next_id(), title, description, priority, "Pending")
+        self.tasks.append(task)
+        self._save()
+        print(f"  ✅ Task #{task.id} created and saved.")
+
+    def read_all(self):
+        if not self.tasks:
+            print("  No tasks found.")
+            return
+        print(f"\n{'─'*50}")
+        for task in self.tasks:
+            print(task)
+            print('─'*50)
+        print(f"  Total: {len(self.tasks)} task(s)")
+
+    def find_by_id(self, task_id):
+        for task in self.tasks:
+            if task.id == task_id:
+                return task
+        return None
+
+    def update(self, task_id, title=None, description=None,
+               priority=None, status=None):
+        task = self.find_by_id(task_id)
+        if not task:
+            print(f"  Task #{task_id} not found."); return
+        if title:       task.title       = title
+        if description: task.description = description
+        if priority:    task.priority    = priority
+        if status:      task.status      = status
+        self._save()
+        print(f"  ✅ Task #{task_id} updated and saved.")
+
+    def delete(self, task_id):
+        task = self.find_by_id(task_id)
+        if not task:
+            print(f"  Task #{task_id} not found."); return
+        self.tasks.remove(task)
+        self._save()
+        print(f"  🗑️  Task #{task_id} deleted and file updated.")
+
+
+# ─── Menu (same pattern as Task 3) ───────────────────────────────────────────
+PRIORITIES = ["Low", "Medium", "High"]
+STATUSES   = ["Pending", "Completed"]
+
+def choose(options, label):
+    for i, opt in enumerate(options, 1):
+        print(f"    {i}. {opt}")
+    while True:
+        try:
+            idx = int(input(f"  Choose {label} (1-{len(options)}): ")) - 1
+            if 0 <= idx < len(options): return options[idx]
+        except ValueError: pass
+        print("  Invalid choice.")
+
+def menu_create(mgr):
+    title       = input("  Title: ").strip()
+    description = input("  Description: ").strip()
+    print("  Priority:"); priority = choose(PRIORITIES, "priority")
+    mgr.create(title, description, priority)
+
+def menu_update(mgr):
+    try: task_id = int(input("  Task ID to update: "))
+    except ValueError: print("  Invalid ID."); return
+    title   = input("  New title (blank to skip): ").strip() or None
+    desc    = input("  New description (blank to skip): ").strip() or None
+    prio    = input("  New priority Low/Medium/High (blank to skip): ").strip().capitalize()
+    stat    = input("  New status Pending/Completed (blank to skip): ").strip().capitalize()
+    mgr.update(task_id, title, desc,
+               prio if prio in PRIORITIES else None,
+               stat if stat in STATUSES else None)
+
+def menu_delete(mgr):
+    try: task_id = int(input("  Task ID to delete: "))
+    except ValueError: print("  Invalid ID."); return
+    mgr.delete(task_id)
+
+
+if __name__ == "__main__":
+    mgr = PersistentTaskManager()
+    print(f"  Loaded {len(mgr.tasks)} task(s) from {FILE_PATH}.")
+    options = {
+        "1": ("Create Task",    menu_create),
+        "2": ("View All Tasks", lambda m: m.read_all()),
+        "3": ("Update Task",    menu_update),
+        "4": ("Delete Task",    menu_delete),
+        "5": ("Exit",           None),
+    }
+    while True:
+     print("\n" + "=" * 40)
+     print("   PERSISTENT TASK MANAGER")
+     print("=" * 40)
+     for k, (label, _) in options.items():
+            print(f"  {k}. {label}")
+     choice = input("Choose: ").strip()
+     if choice == "5": break
+     if choice in options and options[choice][1]:
+            options[choice][1](mgr)
+     else: print("  Invalid choice.")
+print("  Goodbye!")
