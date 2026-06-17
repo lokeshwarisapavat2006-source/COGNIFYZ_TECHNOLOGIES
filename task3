@@ -1,0 +1,155 @@
+# task3_crud_tasks.py
+# Cognifyz Technologies — Level 2 Task 3
+# Console CRUD Task Manager (in-memory storage)
+
+# ─── Task Class ──────────────────────────────────────────────────────────────
+
+class Task:
+    """Represents a single task with an auto-assigned ID."""
+    _id_counter = 0          # class variable shared across all instances
+
+    def __init__(self, title, description, priority="Medium"):
+        Task._id_counter += 1
+        self.id          = Task._id_counter
+        self.title       = title
+        self.description = description
+        self.priority    = priority
+        self.status      = "Pending"
+
+    def __str__(self):
+        return (
+            f"[{self.id}] {self.title} | {self.priority} | {self.status}\n"
+            f"    {self.description}"
+        )
+
+
+# ─── TaskManager Class ───────────────────────────────────────────────────────
+
+class TaskManager:
+    """Manages a list of Task objects with CRUD operations."""
+
+    def __init__(self):
+        self.tasks = []          # the in-memory data store
+
+    # CREATE
+    def create(self, title, description, priority):
+        task = Task(title, description, priority)
+        self.tasks.append(task)
+        print(f"  ✅ Task #{task.id} created successfully.")
+
+    # READ
+    def read_all(self):
+        if not self.tasks:
+            print("  No tasks found.")
+            return
+        print(f"\n{'─'*50}")
+        for task in self.tasks:
+            print(task)
+            print('─'*50)
+
+    def find_by_id(self, task_id):
+        """Return the Task with the given ID, or None."""
+        for task in self.tasks:
+            if task.id == task_id:
+                return task
+        return None
+
+    # UPDATE
+    def update(self, task_id, title=None, description=None,
+               priority=None, status=None):
+        task = self.find_by_id(task_id)
+        if not task:
+            print(f"  Task #{task_id} not found.")
+            return
+        # Only update fields that were actually provided
+        if title:       task.title       = title
+        if description: task.description = description
+        if priority:    task.priority    = priority
+        if status:      task.status      = status
+        print(f"  ✅ Task #{task_id} updated.")
+    # DELETE
+    def delete(self, task_id):
+        task = self.find_by_id(task_id)
+        if not task:
+            print(f"  Task #{task_id} not found.")
+            return
+        self.tasks.remove(task)      # remove the object from the list
+        print(f"  🗑️  Task #{task_id} deleted.")
+
+
+# ─── Input Helpers ───────────────────────────────────────────────────────────
+
+PRIORITIES = ["Low", "Medium", "High"]
+STATUSES   = ["Pending", "Completed"]
+
+def choose(options, label):
+    """Display a numbered list and return the user's choice."""
+    for i, opt in enumerate(options, 1):
+        print(f"    {i}. {opt}")
+    while True:
+        try:
+            idx = int(input(f"  Choose {label} (1-{len(options)}): ")) - 1
+            if 0 <= idx < len(options):
+                return options[idx]
+        except ValueError:
+            pass
+        print("  Invalid choice.")
+
+
+# ─── Menu ────────────────────────────────────────────────────────────────────
+
+def menu_create(mgr):
+    title       = input("  Title: ").strip()
+    description = input("  Description: ").strip()
+    print("  Priority:")
+    priority    = choose(PRIORITIES, "priority")
+    mgr.create(title, description, priority)
+
+
+def menu_update(mgr):
+    try:
+        task_id = int(input("  Task ID to update: "))
+    except ValueError:
+        print("  Invalid ID."); return
+    print("  Leave blank to keep existing value.")
+    title       = input("  New title: ").strip() or None
+    description = input("  New description: ").strip() or None
+    print("  New priority (blank to skip):")
+    prio_input  = input("    (Low/Medium/High): ").strip().capitalize()
+    priority    = prio_input if prio_input in PRIORITIES else None
+    print("  New status (blank to skip):")
+    stat_input  = input("    (Pending/Completed): ").strip().capitalize()
+    status      = stat_input if stat_input in STATUSES else None
+    mgr.update(task_id, title, description, priority, status)
+
+
+def menu_delete(mgr):
+    try:
+        task_id = int(input("  Task ID to delete: "))
+    except ValueError:
+        print("  Invalid ID."); return
+    mgr.delete(task_id)
+
+
+# ─── Entry Point ──────────────────────────────────────────────────────────────
+if __name__ == "__main__":
+    mgr = TaskManager()
+    options = {
+        "1": ("Create Task",   menu_create),
+        "2": ("View All Tasks", lambda m: m.read_all()),
+        "3": ("Update Task",   menu_update),
+        "4": ("Delete Task",   menu_delete),
+        "5": ("Exit",          None),
+    }
+    while True:
+        print("\n" + "=" * 40)
+        print("     TASK MANAGER")
+        print("=" * 40)
+        for k, (label, _) in options.items():
+            print(f"  {k}. {label}")
+        choice = input("Choose: ").strip()
+        if choice == "5": break
+        if choice in options and options[choice][1]:
+            options[choice][1](mgr)
+        else:
+            print("  Invalid choice.")
