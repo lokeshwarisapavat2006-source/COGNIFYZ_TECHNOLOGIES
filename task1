@@ -1,0 +1,107 @@
+# task1_quiz_game.py
+# Cognifyz Technologies — Level 1 Task 1
+# A text-based multiple-choice quiz game
+# ─── Question Bank ───────────────────────────────────────────────────────────
+QUESTIONS = [
+    {
+        "question": "What is the output of: print(2 ** 3) in Python?",
+        "options": {"A": "6", "B": "8", "C": "9", "D": "16"},
+        "answer": "B",
+    },
+    {
+        "question": "Which data type is used to store True or False?",
+        "options": {"A": "int", "B": "str", "C": "bool", "D": "float"},
+        "answer": "C",
+    },
+    {
+        "question": "What keyword is used to define a function in Python?",
+        "options": {"A": "func", "B": "define", "C": "lambda", "D": "def"},
+        "answer": "D",
+    },
+    {
+        "question": "Which operator checks equality in Python?",
+        "options": {"A": "=", "B": "==", "C": "!=", "D": "==="},
+        "answer": "B",
+    },
+    {
+        "question": "What does len([1, 2, 3]) return?",
+        "options": {"A": "2", "B": "4", "C": "3", "D": "0"},
+        "answer": "C",
+    },
+]
+
+
+# ─── Helper Functions ─────────────────────────────────────────────────────────
+def display_question(number, q_data):
+    """Print a formatted question with its options."""
+    print(f"\nQuestion {number}: {q_data['question']}")
+    print("-" * 50)
+    for key, value in q_data['options'].items():
+        print(f"  {key}) {value}")
+    print("-" * 50)
+
+
+def get_valid_input(valid_options):
+    """Keep prompting until the user enters a valid option."""
+    while True:
+        answer = input("Your answer (A/B/C/D): ").strip().upper()
+        if answer in valid_options:
+            return answer
+        print(f"  Invalid choice. Please enter one of: {', '.join(valid_options)}")
+
+
+def check_answer(user_answer, correct_answer, q_data):
+    """Return True if correct, print feedback either way."""
+    if user_answer == correct_answer:
+        print("  ✅ Correct!")
+        return True
+    else:
+        correct_text = q_data['options'][correct_answer]
+        print(f"  ❌ Wrong! The correct answer was: {correct_answer}) {correct_text}")
+        return False
+
+
+def show_result(score, total):
+    """Display the final score with a performance message."""
+    percentage = (score / total) * 100
+    print("\n" + "=" * 50)
+    print(f"  FINAL SCORE: {score} / {total}  ({percentage:.0f}%)")
+    print("=" * 50)
+    if percentage == 100:
+        print("  🏆 Perfect score! Outstanding!")
+    elif percentage >= 80:
+        print("  🎉 Great job! Well done!")
+    elif percentage >= 60:
+        print("  👍 Good effort! Keep practising.")
+    else:
+        print("  📚 Keep studying — you'll get there!")
+
+
+# ─── Main Game Loop ───────────────────────────────────────────────────────────
+def play_game():
+    """Run one full round of the quiz."""
+    print("\n" + "=" * 50)
+    print("   WELCOME TO THE PYTHON KNOWLEDGE QUIZ!")
+    print("=" * 50)
+    print(f"Answer {len(QUESTIONS)} questions. Good luck!\n")
+
+    score = 0
+    valid_keys = ["A", "B", "C", "D"]
+
+    for index, q in enumerate(QUESTIONS, start=1):  # enumerate gives index + value
+        display_question(index, q)
+        user_answer = get_valid_input(valid_keys)
+        if check_answer(user_answer, q['answer'], q):
+            score += 1  # increment score only if correct
+
+    show_result(score, len(QUESTIONS))
+
+
+# ─── Entry Point ──────────────────────────────────────────────────────────────
+if __name__ == "__main__":
+    while True:
+        play_game()
+        again = input("\nPlay again? (yes/no): ").strip().lower()
+        if again not in ("yes", "y"):
+            print("Thanks for playing! Goodbye!")
+            break
